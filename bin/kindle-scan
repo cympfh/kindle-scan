@@ -1,0 +1,45 @@
+#!/bin/bash
+
+# Find out!
+REGION_X=2928
+REGION_Y=507
+REGION_W=864
+REGION_H=1220
+
+WIN_MID_X=$(( REGION_X + REGION_W / 2 ))
+WIN_MID_Y=$(( REGION_Y + REGION_H / 2 ))
+
+HASH_PREV=1
+HASH_PREVPREV=2
+FILE_PREV=
+
+xdotool mousemove $WIN_MID_X $WIN_MID_Y
+xdotool mousedown 1
+sleep 1
+echo Ready
+
+for i in $(seq 1000); do
+    FILE=$(printf "%03d.png" "$i")
+    import -window root -crop "${REGION_W}x${REGION_H}+${REGION_X}+${REGION_Y}" "$FILE"
+    sleep 0.2
+
+    HASH=$(imagehash "$FILE")
+    echo "$FILE -- $HASH"
+    if [ "$HASH" = "$HASH_PREV" ] && [ "$HASH" = "$HASH_PREVPREV" ]; then
+        echo "Finished"
+        rm "$FILE"
+        rm "$FILE_PREV"
+        break
+    else
+        HASH_PREVPREV=$HASH_PREV
+        HASH_PREV=$HASH
+        FILE_PREV=$FILE
+    fi
+
+    xdotool mousemove $WIN_MID_X $WIN_MID_Y
+    xdotool mousedown 1
+    xdotool key Left
+    sleep 1
+done
+
+rm -f logfile.log
